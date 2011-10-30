@@ -177,7 +177,8 @@ if (! defined $rmonth) {
 		print wochentag($_),", $_";
                 if ( ( my $year_of_birth ) = $_ =~ /\W(?:geboren|born) (\d{4})/ ) {
                     my $age = $ryear - $year_of_birth;
-                    print ", Alter: $age Jahre";
+                    print ", Alter: $age Jahr";
+                    print "e" if $age != 1;
                 }
                 print "\n";
 	}
