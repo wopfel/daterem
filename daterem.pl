@@ -40,6 +40,11 @@ if ($opt_help) {
 # Default file is daterem.dat
 $opt_infile ||= "daterem.dat";
 
+# Ensure input file is readable
+if (! -r $opt_infile) {
+    die "Cannot read input file '$opt_infile'";
+}
+
 
 ###############
 sub print_usage
@@ -187,55 +192,51 @@ sub readdat
 	my $dat2;
 	my ($dat1_day,$dat1_month,$dat1_year);
 	my ($dat2_day,$dat2_month,$dat2_year);
-	if (-r $opt_infile) {
-		open(DATA,"< $opt_infile")
-			or die "\nIrgendetwas stimmt hier nicht!\n\n";
-		while (<DATA>) {
-			chomp;
-			s/^#.*//g; # entfernt Kommentarzeilen
-			s/\s{2,}/ /g; # ersetzt mehrere WS durch ein Leerzeichen
-			s/^\s+//g; # entfernt Whitespace(s) am Zeilenanfang
-			s/\s+$//g; # entfernt Whitespace(s) am Zeilenende
-			if (m/^.+$/) {
-				($zeit,$beschreibung) = split(/ /, $_, 2);
-				if ($zeit =~ m/^[-0-9]+$/) { # Osterdaten
-					$zeit = $zeit * $day + $easter;
-					($dat1_day,$dat1_month,$dat1_year) = (localtime($zeit))[3,4,5];
+	open(DATA,"< $opt_infile")
+		or die "\nIrgendetwas stimmt hier nicht!\n\n";
+	while (<DATA>) {
+		chomp;
+		s/^#.*//g; # entfernt Kommentarzeilen
+		s/\s{2,}/ /g; # ersetzt mehrere WS durch ein Leerzeichen
+		s/^\s+//g; # entfernt Whitespace(s) am Zeilenanfang
+		s/\s+$//g; # entfernt Whitespace(s) am Zeilenende
+		if (m/^.+$/) {
+			($zeit,$beschreibung) = split(/ /, $_, 2);
+			if ($zeit =~ m/^[-0-9]+$/) { # Osterdaten
+				$zeit = $zeit * $day + $easter;
+				($dat1_day,$dat1_month,$dat1_year) = (localtime($zeit))[3,4,5];
+				$dat1_month++;
+				$dat1_year += 1900;
+				add2list($dat1_day,$dat1_month,$dat1_year,$beschreibung);
+			} elsif ($zeit =~ m/.+-.+/) { # Ein Zeitraum
+				($dat1,$dat2) = split(/-/ , $zeit);
+				($dat1_day,$dat1_month,$dat1_year) = split(/\./,$dat1);
+				($dat2_day,$dat2_month,$dat2_year) = split(/\./,$dat2);
+				$dat2_year ||= $ryear;
+				$dat1_month ||= $dat2_month;
+				$dat1_year ||= $dat2_year;
+				
+                                # Add begin-end date to description
+                                $beschreibung .= " [$zeit]";
+
+				$dat1 = timelocal(0,0,12,$dat1_day,$dat1_month-1,$dat1_year-1900);
+				$dat2 = timelocal(0,0,12,$dat2_day,$dat2_month-1,$dat2_year-1900);
+				while ($dat1 <= $dat2) {
+					($dat1_day,$dat1_month,$dat1_year) = (localtime($dat1))[3,4,5];
 					$dat1_month++;
 					$dat1_year += 1900;
 					add2list($dat1_day,$dat1_month,$dat1_year,$beschreibung);
-				} elsif ($zeit =~ m/.+-.+/) { # Ein Zeitraum
-					($dat1,$dat2) = split(/-/ , $zeit);
-					($dat1_day,$dat1_month,$dat1_year) = split(/\./,$dat1);
-					($dat2_day,$dat2_month,$dat2_year) = split(/\./,$dat2);
-					$dat2_year ||= $ryear;
-					$dat1_month ||= $dat2_month;
-					$dat1_year ||= $dat2_year;
-					
-                                        # Add begin-end date to description
-                                        $beschreibung .= " [$zeit]";
-
-					$dat1 = timelocal(0,0,12,$dat1_day,$dat1_month-1,$dat1_year-1900);
-					$dat2 = timelocal(0,0,12,$dat2_day,$dat2_month-1,$dat2_year-1900);
-					while ($dat1 <= $dat2) {
-						($dat1_day,$dat1_month,$dat1_year) = (localtime($dat1))[3,4,5];
-						$dat1_month++;
-						$dat1_year += 1900;
-						add2list($dat1_day,$dat1_month,$dat1_year,$beschreibung);
-						$dat1 += $day;
-					}
-					
-				} else { # Ein einzelnes Datum
-					($dat1_day,$dat1_month,$dat1_year) = split(/\./,$zeit);
-					$dat1_year ||= $ryear;
-					add2list($dat1_day,$dat1_month,$dat1_year,$beschreibung);
+					$dat1 += $day;
 				}
+				
+			} else { # Ein einzelnes Datum
+				($dat1_day,$dat1_month,$dat1_year) = split(/\./,$zeit);
+				$dat1_year ||= $ryear;
+				add2list($dat1_day,$dat1_month,$dat1_year,$beschreibung);
 			}
 		}
-		close DATA;
-	} else {
-		print "\nNo datafile!\n\n";
 	}
+	close DATA;
 }
 
 ($rday,$rmonth,$ryear) = options;
