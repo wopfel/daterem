@@ -39,6 +39,10 @@ EOF
 
 daterem - A little Perl script to remind you of daily due dates
 
+Prints all due dates for the current date. You can specify another date that
+you want to look at as a parameter. 
+As a default, the script reads the file 'daterem.dat' in the current directory.
+
 Copyright 2006-2011, Dirk Deimeke
 See file LICENSE for full license text
 
