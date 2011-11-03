@@ -12,40 +12,6 @@ my @alles;
 my ($opt_help, $opt_infile);
 
 
-###
-#   Process and validate command line options
-###
-
-Getopt::Long::Configure('bundling');
-
-# Process command line options
-my $opt_result = GetOptions(
-    "h"    => \$opt_help,                    "help"                        => \$opt_help,
-    "f=s"  => \$opt_infile,                  "file=s",                     => \$opt_infile,
-);
-
-# Error occured on processing command line options?
-if (!$opt_result) {
-    print_usage(\*STDERR);
-    print STDERR "\n";
-    exit 1;
-}
-
-# Help requested?
-if ($opt_help) {
-    print_help();
-    exit 0;
-}
-
-# Default file is daterem.dat
-$opt_infile ||= "daterem.dat";
-
-# Ensure input file is readable
-if (! -r $opt_infile) {
-    die "Cannot read input file '$opt_infile'";
-}
-
-
 ###############
 sub print_usage
 ###############
@@ -90,11 +56,47 @@ EOF
 sub options
 ###########
 {
-	my ($day,$month,$year);
+    Getopt::Long::Configure('bundling');
+
+    # Process command line options
+    my $opt_result = GetOptions(
+        "h"    => \$opt_help,                    "help"                        => \$opt_help,
+        "f=s"  => \$opt_infile,                  "file=s",                     => \$opt_infile,
+    );
+
+    # Error occured on processing command line options?
+    if (!$opt_result) {
+        print_usage(\*STDERR);
+        print STDERR "\n";
+        exit 1;
+    }
+
+    # Help requested?
+    if ($opt_help) {
+        print_help();
+        exit 0;
+    }
+
+    # Default file is daterem.dat
+    $opt_infile ||= "daterem.dat";
+
+    # Ensure input file is readable
+    if (! -r $opt_infile) {
+        die "Cannot read input file '$opt_infile'";
+    }
+
+	# After the command line options were processed,
+	# there mustn't be more than one argument left.
 	if (@ARGV>=2) {
-		print "\nUsage: $0 [[[dd.]mm.]yyyy]\n\n";
+		print_usage(\*STDERR);
+		print STDERR "\n";
 		exit 1;
 	} 
+
+	# The desired date
+	my ($day,$month,$year);
+
+	# One argument: the date we should search for
 	if (@ARGV==1) {
 		($day,$month,$year) = split(/\./,$ARGV[0]);
 		if (! defined $year) {
@@ -117,7 +119,9 @@ sub options
 	$month = "0$month"  if length $month < 2;
 
 	return ($day,$month,$year);
+
 }
+
 ##############
 sub calceaster # Ostern berechnen
 ##############
