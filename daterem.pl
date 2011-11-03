@@ -106,6 +106,11 @@ sub options
 		$month++;
 		$year += 1900;
 	}
+
+        # Prefix day and month with leading zeros
+	$day   = "0$day"    if length $day < 2;
+	$month = "0$month"  if length $month < 2;
+
 	return ($day,$month,$year);
 }
 ##############
