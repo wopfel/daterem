@@ -1,11 +1,85 @@
 #!/usr/bin/perl -w
 use strict;
 use Time::Local;
+use Getopt::Long;
 
 my ($rday,$rmonth,$ryear);
 my $day = 60*60*24;
 my $easter;
 my @alles;
+
+# Option flags
+my ($opt_help, $opt_infile);
+
+
+###
+#   Process and validate command line options
+###
+
+Getopt::Long::Configure('bundling');
+
+# Process command line options
+my $opt_result = GetOptions(
+    "h"    => \$opt_help,                    "help"                        => \$opt_help,
+    "f=s"  => \$opt_infile,                  "file=s",                     => \$opt_infile,
+);
+
+# Error occured on processing command line options?
+if (!$opt_result) {
+    print_usage(\*STDERR);
+    print STDERR "\n";
+    exit 1;
+}
+
+# Help requested?
+if ($opt_help) {
+    print_help();
+    exit 0;
+}
+
+# Default file is daterem.dat
+$opt_infile ||= "daterem.dat";
+
+
+###############
+sub print_usage
+###############
+{
+    # Parameter: where to print? STDOUT or STDERR.
+    my $handle = shift;
+
+    print { $handle } << "EOF";
+Usage: $0 [options] [[[dd.]mm.]yyyy]
+EOF
+}
+
+##############
+sub print_help
+##############
+{
+    print << "EOF";
+daterem
+
+EOF
+
+    print_usage(\*STDOUT);
+
+    print << "EOF";
+
+daterem - A little Perl script to remind you of daily due dates
+
+Copyright 2006-2011, Dirk Deimeke
+See file LICENSE for full license text
+
+OPTIONS:
+    -h, --help
+        Display this help.
+
+    -f, --file=FILE
+        Read date entries from file FILE instead of the default file 'daterem.dat'.
+
+EOF
+}
 
 ###########
 sub options
@@ -108,8 +182,8 @@ sub readdat
 	my $dat2;
 	my ($dat1_day,$dat1_month,$dat1_year);
 	my ($dat2_day,$dat2_month,$dat2_year);
-	if (-r 'daterem.dat') {
-		open(DATA,"< daterem.dat") 
+	if (-r $opt_infile) {
+		open(DATA,"< $opt_infile")
 			or die "\nIrgendetwas stimmt hier nicht!\n\n";
 		while (<DATA>) {
 			chomp;
